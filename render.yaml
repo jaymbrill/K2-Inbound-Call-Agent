@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: k2-inbound-call-agent
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ELEVENLABS_API_KEY
+        sync: false          # you'll enter this in the Render dashboard
+      - key: ELEVENLABS_AGENT_ID
+        sync: false
+      - key: ELEVENLABS_LLM
+        value: claude-3-5-sonnet
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: SERVER_URL
+        sync: false          # set this to your Render URL after first deploy
+      - key: VALIDATE_TWILIO_SIGNATURE
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO

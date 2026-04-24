@@ -19,7 +19,7 @@ from app.services.proxy import handle_media_stream
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-_question_set = QuestionSet.from_yaml(Path("data/questions.yaml"))
+_question_set = QuestionSet.from_yaml(Path(__file__).parent.parent.parent / "data" / "questions.yaml")
 
 _ERROR_TWIML = (
     '<?xml version="1.0" encoding="UTF-8"?>'

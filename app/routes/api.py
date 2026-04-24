@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -9,7 +11,7 @@ from app.services.deps import caller_db
 router = APIRouter(prefix="/api")
 
 _EL_BASE = "https://api.elevenlabs.io"
-_QUESTIONS_PATH = __import__("pathlib").Path("data/questions.yaml")
+_QUESTIONS_PATH = Path(__file__).parent.parent.parent / "data" / "questions.yaml"
 
 
 async def _el_get(path: str, params: dict = None):

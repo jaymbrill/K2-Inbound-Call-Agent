@@ -1,0 +1,31 @@
+intro_prompt: |
+  After your opening greeting, guide the conversation naturally through the questions below.
+  Do NOT read them like a script — respond warmly to what the caller says first, then
+  transition into each question when the moment feels right.
+  If a caller answers multiple questions at once, acknowledge it and move on naturally.
+
+questions:
+  - id: checkin
+    text: "How have you been lately?"
+    variable_name: checkin
+    required: true
+
+  - id: recent_news
+    text: "Anything exciting going on in your world?"
+    variable_name: recent_news
+    required: false
+
+  - id: on_your_mind
+    text: "What's been on your mind these days?"
+    variable_name: on_your_mind
+    required: true
+
+  - id: projects
+    text: "Any interesting projects or plans you're working on?"
+    variable_name: projects
+    required: false
+
+  - id: help_needed
+    text: "Is there anything specific I can help with or follow up on for you?"
+    variable_name: help_needed
+    required: true

@@ -22,8 +22,48 @@ async def _el_get(path: str, params: dict = None):
             params=params or {},
             timeout=15.0,
         )
-        resp.raise_for_status()
+        if not resp.is_success:
+            raise HTTPException(
+                status_code=resp.status_code,
+                detail=f"ElevenLabs {resp.status_code}: {resp.text}",
+            )
         return resp.json()
+
+
+# ---------------------------------------------------------------------------
+# Diagnostics
+# ---------------------------------------------------------------------------
+
+@router.get("/debug")
+async def debug():
+    """Check API key validity and ElevenLabs connectivity."""
+    key = settings.elevenlabs_api_key
+    preview = (key[:8] + "…" + key[-4:]) if len(key) > 12 else "too short / missing"
+
+    result: dict = {
+        "api_key_preview": preview,
+        "api_key_length": len(key),
+        "agent_id": settings.elevenlabs_agent_id or "(not set)",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{_EL_BASE}/v1/user",
+                headers={"xi-api-key": key},
+                timeout=10.0,
+            )
+            if resp.is_success:
+                user = resp.json()
+                result["elevenlabs_auth"] = "OK"
+                result["account_email"] = user.get("email", "(hidden)")
+            else:
+                result["elevenlabs_auth"] = f"FAILED — {resp.status_code}"
+                result["elevenlabs_error"] = resp.text
+        except Exception as exc:
+            result["elevenlabs_auth"] = f"ERROR — {exc}"
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -35,18 +75,12 @@ async def list_conversations(page_size: int = 30, cursor: str = ""):
     params = {"agent_id": settings.elevenlabs_agent_id, "page_size": page_size}
     if cursor:
         params["cursor"] = cursor
-    try:
-        return await _el_get("/v1/convai/conversations", params)
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=str(exc))
+    return await _el_get("/v1/convai/conversations", params)
 
 
 @router.get("/conversations/{conversation_id}")
 async def get_conversation(conversation_id: str):
-    try:
-        return await _el_get(f"/v1/convai/conversations/{conversation_id}")
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=str(exc))
+    return await _el_get(f"/v1/convai/conversations/{conversation_id}")
 
 
 # ---------------------------------------------------------------------------

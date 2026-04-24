@@ -2,6 +2,7 @@ import logging
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from app.config import settings
 from app.routes.twilio import router as twilio_router
@@ -13,6 +14,11 @@ logging.basicConfig(
 
 app = FastAPI(title="K2 Inbound Call Agent")
 app.include_router(twilio_router)
+
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/health")
 
 
 @app.get("/health")

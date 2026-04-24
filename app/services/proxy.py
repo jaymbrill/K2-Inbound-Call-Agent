@@ -10,30 +10,21 @@ messages bidirectionally.
 import asyncio
 import json
 import logging
-from pathlib import Path
 
 import websockets
 from fastapi import WebSocket, WebSocketDisconnect
 
 from app.config import settings
 from app.models.caller import CallerProfile
-from app.models.questions import QuestionSet
 from app.services.caller_db import CallerDatabase
-from app.services.personalization import (
-    build_first_message,
-    build_system_prompt,
-    build_dynamic_variables,
-)
+from app.services.personalization import build_first_message
 
 logger = logging.getLogger(__name__)
 
-_db = CallerDatabase(Path("data/callers.json"))
-_question_set = QuestionSet.from_yaml(Path("data/questions.yaml"))
-
+# db is injected at call time to share the same instance as the route layer
 _EL_WS_URL = "wss://api.elevenlabs.io/v1/convai/twilio"
 
-
-async def handle_media_stream(websocket: WebSocket):
+async def handle_media_stream(websocket: WebSocket, db: CallerDatabase):
     await websocket.accept()
 
     el_url = f"{_EL_WS_URL}?agent_id={settings.elevenlabs_agent_id}"
@@ -55,7 +46,7 @@ async def handle_media_stream(websocket: WebSocket):
                         call_sid = data.get("start", {}).get("callSid", "")
                         logger.info(f"[{call_sid}] Proxy stream — caller: {caller_number}")
 
-                        caller = _db.lookup(caller_number) or CallerProfile(
+                        caller = db.lookup(caller_number) or CallerProfile(
                             phone_number=caller_number
                         )
 
@@ -74,7 +65,7 @@ async def handle_media_stream(websocket: WebSocket):
                             json.dumps({"type": "contextual_update", "text": context})
                         )
 
-                        _db.increment_call_count(caller_number)
+                        db.increment_call_count(caller_number)
 
                     elif event == "stop":
                         await el_ws.send(raw)

@@ -95,4 +95,4 @@ async def incoming_call_proxy(request: Request):
 
 @router.websocket("/media-stream")
 async def media_stream(websocket: WebSocket):
-    await handle_media_stream(websocket)
+    await handle_media_stream(websocket, _db)

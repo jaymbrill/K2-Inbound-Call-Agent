@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %} — Callers{% endblock %}
+{% block heading %}Callers{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <p class="text-sm text-gray-500">Known callers get a personalized greeting and joke on every call.</p>
+  <button onclick="openModal(null)"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+    + Add Caller
+  </button>
+</div>
+
+<div id="caller-grid" class="space-y-3">
+  <div class="text-center text-gray-600 text-sm py-16">Loading…</div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6"
+     onclick="if(event.target===this)closeModal()" style="background:rgba(0,0,0,.7)">
+  <div class="w-full max-w-lg rounded-2xl border border-gray-700 shadow-2xl flex flex-col" style="background:#111118">
+    <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+      <p id="modal-title" class="text-sm font-semibold text-white">Add Caller</p>
+      <button onclick="closeModal()" class="text-gray-600 hover:text-gray-300 text-xl leading-none">×</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">Phone <span class="text-gray-600">(E.164)</span> *</label>
+          <input id="f-phone" type="tel" placeholder="+15551234567"
+                 class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+                 style="background:#1a1a24" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">Full Name *</label>
+          <input id="f-name" type="text" placeholder="Jay"
+                 class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+                 style="background:#1a1a24" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">Nickname <span class="text-gray-600">(used in greeting)</span></label>
+          <input id="f-nickname" type="text" placeholder="J"
+                 class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+                 style="background:#1a1a24" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 mb-1.5">Personalized Joke</label>
+        <input id="f-joke" type="text" placeholder="Why do programmers prefer dark mode? Light attracts bugs!"
+               class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+               style="background:#1a1a24" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 mb-1.5">Notes <span class="text-gray-600">(context for the agent)</span></label>
+        <textarea id="f-notes" rows="3" placeholder="Long-time friend. Into tech and coffee."
+                  class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  style="background:#1a1a24"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-800 flex gap-3 justify-end">
+      <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+      <button onclick="saveCaller()"
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+        Save Caller
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let callers = [], editingPhone = null
+
+async function load() {
+  const res = await fetch('/api/callers')
+  callers = await res.json()
+  render()
+}
+
+function render() {
+  const el = document.getElementById('caller-grid')
+  if (!callers.length) {
+    el.innerHTML = '<div class="text-center text-gray-600 text-sm py-16">No callers yet — add one above.</div>'
+    return
+  }
+  el.innerHTML = callers.map(c => `
+    <div class="rounded-xl border border-gray-800 px-5 py-4 flex items-start gap-4 hover:border-gray-700 transition-colors" style="background:#111118">
+      <div class="w-10 h-10 rounded-full bg-indigo-600/20 border border-indigo-600/30 flex items-center justify-center shrink-0 text-indigo-400 font-bold text-base">
+        ${(c.nickname||c.name||'?').charAt(0).toUpperCase()}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-sm font-semibold text-white">${c.name||''}${c.nickname&&c.nickname!==c.name?` <span class="text-gray-500 font-normal text-xs">(${c.nickname})</span>`:''}</p>
+          <span class="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">${c.call_count||0} call${c.call_count!==1?'s':''}</span>
+        </div>
+        <p class="text-xs text-gray-600 mt-0.5 font-mono">${c.phone_number}</p>
+        ${c.joke?`<p class="text-xs text-gray-600 mt-1.5 italic">"${c.joke}"</p>`:''}
+        ${c.notes?`<p class="text-xs text-gray-500 mt-1">${c.notes}</p>`:''}
+      </div>
+      <div class="flex gap-2 shrink-0">
+        <button onclick='openModal(${JSON.stringify(c)})'
+                class="px-3 py-1.5 text-xs rounded-lg text-gray-400 hover:text-gray-100 border border-gray-700 hover:border-gray-500 transition-colors">
+          Edit
+        </button>
+        <button onclick="remove('${c.phone_number.replace(/'/g,"\\'")}')"
+                class="px-3 py-1.5 text-xs rounded-lg text-red-500/70 hover:text-red-400 border border-red-900/40 hover:border-red-900 transition-colors">
+          Delete
+        </button>
+      </div>
+    </div>`).join('')
+}
+
+function openModal(c) {
+  editingPhone = c ? c.phone_number : null
+  document.getElementById('modal-title').textContent = c ? 'Edit Caller' : 'Add Caller'
+  document.getElementById('f-phone').value = c?.phone_number || ''
+  document.getElementById('f-phone').disabled = !!c
+  document.getElementById('f-name').value = c?.name || ''
+  document.getElementById('f-nickname').value = c?.nickname || ''
+  document.getElementById('f-joke').value = c?.joke || ''
+  document.getElementById('f-notes').value = c?.notes || ''
+  document.getElementById('modal').classList.remove('hidden')
+}
+
+function closeModal() { document.getElementById('modal').classList.add('hidden') }
+
+async function saveCaller() {
+  let phone = document.getElementById('f-phone').value.trim()
+  const name = document.getElementById('f-name').value.trim()
+  if (!phone || !name) { alert('Phone number and name are required.'); return }
+  if (!phone.startsWith('+')) phone = '+1' + phone.replace(/\D/g,'')
+
+  const existing = callers.find(c => c.phone_number === phone)
+  const payload = {
+    name,
+    nickname: document.getElementById('f-nickname').value.trim() || null,
+    joke:     document.getElementById('f-joke').value.trim() || null,
+    notes:    document.getElementById('f-notes').value.trim() || null,
+    call_count: existing?.call_count || 0,
+    is_known: true,
+  }
+  await fetch(`/api/callers/${encodeURIComponent(phone)}`, {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload),
+  })
+  closeModal()
+  load()
+}
+
+async function remove(phone) {
+  if (!confirm(`Remove ${phone} from known callers?`)) return
+  await fetch(`/api/callers/${encodeURIComponent(phone)}`, { method: 'DELETE' })
+  load()
+}
+
+load()
+</script>
+{% endblock %}

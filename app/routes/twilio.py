@@ -1,13 +1,11 @@
 import logging
-from pathlib import Path
-
 from fastapi import APIRouter, HTTPException, Request, Response, WebSocket
 from twilio.request_validator import RequestValidator
 
 from app.config import settings
 from app.models.caller import CallerProfile
 from app.models.questions import QuestionSet
-from app.services.caller_db import CallerDatabase
+from app.services.deps import caller_db as _db
 from app.services.elevenlabs_client import build_stream_twiml, register_call
 from app.services.personalization import (
     build_dynamic_variables,
@@ -19,7 +17,6 @@ from app.services.proxy import handle_media_stream
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-_db = CallerDatabase(Path("data/callers.json"))
 _question_set = QuestionSet.from_yaml(Path("data/questions.yaml"))
 
 _ERROR_TWIML = (

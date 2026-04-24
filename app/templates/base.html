@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K2 Agent{% block title %}{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex" style="background:#09090f">
+
+  <!-- Sidebar -->
+  <aside class="w-52 shrink-0 flex flex-col border-r border-gray-800" style="background:#111118">
+    <div class="px-5 py-6 border-b border-gray-800">
+      <p class="text-base font-bold text-white tracking-tight">K2 Agent</p>
+      <p class="text-xs text-gray-500 mt-0.5">Voice Dashboard</p>
+    </div>
+    <nav class="flex-1 p-3 space-y-0.5">
+      {% set nav = [('/ui/', 'calls', 'Call History'), ('/ui/callers', 'callers', 'Callers'), ('/ui/questions', 'questions', 'Questions')] %}
+      {% for href, key, label in nav %}
+      <a href="{{ href }}"
+         class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                {% if page == key %}bg-indigo-600 text-white{% else %}text-gray-400 hover:bg-white/5 hover:text-gray-100{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="p-4 border-t border-gray-800">
+      <a href="/health" class="text-xs text-gray-700 hover:text-gray-500 transition-colors">System status ↗</a>
+    </div>
+  </aside>
+
+  <!-- Page -->
+  <div class="flex-1 flex flex-col overflow-auto">
+    <header class="px-8 py-5 border-b border-gray-800 shrink-0" style="background:#111118">
+      <h1 class="text-base font-semibold text-white">{% block heading %}{% endblock %}</h1>
+    </header>
+    <main class="flex-1 p-8">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+</body>
+</html>

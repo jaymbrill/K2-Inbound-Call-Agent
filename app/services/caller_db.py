@@ -44,6 +44,16 @@ class CallerDatabase:
         }
         self._save()
 
+    def all(self) -> list[dict]:
+        return list(self._data.values())
+
+    def delete(self, phone_number: str) -> bool:
+        if phone_number not in self._data:
+            return False
+        del self._data[phone_number]
+        self._save()
+        return True
+
     def increment_call_count(self, phone_number: str):
         if phone_number in self._data:
             self._data[phone_number]["call_count"] = (

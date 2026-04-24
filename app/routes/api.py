@@ -47,6 +47,7 @@ async def debug():
     }
 
     async with httpx.AsyncClient() as client:
+        # Test 1: basic auth
         try:
             resp = await client.get(
                 f"{_EL_BASE}/v1/user",
@@ -62,6 +63,19 @@ async def debug():
                 result["elevenlabs_error"] = resp.text
         except Exception as exc:
             result["elevenlabs_auth"] = f"ERROR — {exc}"
+
+        # Test 2: conversations history endpoint
+        try:
+            resp2 = await client.get(
+                f"{_EL_BASE}/v1/convai/conversations",
+                headers={"xi-api-key": key},
+                params={"agent_id": settings.elevenlabs_agent_id, "page_size": 1},
+                timeout=10.0,
+            )
+            result["conversations_endpoint"] = resp2.status_code
+            result["conversations_response"] = resp2.text[:500]
+        except Exception as exc:
+            result["conversations_endpoint"] = f"ERROR — {exc}"
 
     return result
 

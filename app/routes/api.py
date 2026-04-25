@@ -15,6 +15,33 @@ _QUESTIONS_PATH = Path(__file__).parent.parent.parent / "data" / "questions.yaml
 
 
 # ---------------------------------------------------------------------------
+# Voices — list available ElevenLabs voices including clones
+# ---------------------------------------------------------------------------
+
+@router.get("/voices")
+async def list_voices():
+    """Returns all voices in your ElevenLabs account, including cloned ones."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{_EL_BASE}/v1/voices",
+            headers={"xi-api-key": settings.elevenlabs_api_key},
+            timeout=10.0,
+        )
+        if not resp.is_success:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text)
+        voices = resp.json().get("voices", [])
+        return [
+            {
+                "voice_id": v["voice_id"],
+                "name": v["name"],
+                "category": v.get("category", ""),
+                "current": v["voice_id"] == settings.elevenlabs_voice_id,
+            }
+            for v in voices
+        ]
+
+
+# ---------------------------------------------------------------------------
 # Diagnostics
 # ---------------------------------------------------------------------------
 

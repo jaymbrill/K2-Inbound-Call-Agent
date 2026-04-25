@@ -20,9 +20,6 @@
     <button onclick="load()" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">↺ Refresh</button>
   </div>
   <div id="call-list"><div class="px-6 py-16 text-center text-gray-600 text-sm">Loading…</div></div>
-  <div id="load-more-row" class="hidden border-t border-gray-800 px-6 py-4 text-center">
-    <button onclick="loadMore()" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">Load more</button>
-  </div>
 </div>
 
 <!-- Transcript drawer -->
@@ -44,108 +41,85 @@ const fmt = {
   today: u => new Date(u*1000).toDateString() === new Date().toDateString(),
 }
 
-let cursor = '', hasMore = false, allCalls = []
+let allCalls = []
 
 async function load() {
-  cursor = ''; allCalls = []
   document.getElementById('call-list').innerHTML = '<div class="px-6 py-16 text-center text-gray-600 text-sm">Loading…</div>'
-  await fetchPage()
-}
-
-async function loadMore() { await fetchPage() }
-
-async function fetchPage() {
-  const url = `/api/conversations?page_size=30${cursor ? '&cursor='+cursor : ''}`
-  const res = await fetch(url)
+  const res = await fetch('/api/conversations?limit=50')
   if (!res.ok) {
-    document.getElementById('call-list').innerHTML = `<div class="px-6 py-16 text-center text-red-400 text-sm">Failed to load — ${res.status}. Check your ElevenLabs API key.</div>`
+    document.getElementById('call-list').innerHTML = `<div class="px-6 py-16 text-center text-red-400 text-sm">Failed to load (${res.status})</div>`
     return
   }
   const data = await res.json()
-  const calls = data.conversations || []
-  allCalls = [...allCalls, ...calls]
-  cursor = data.next_cursor || ''
-  hasMore = data.has_more || false
-
-  // Stats (first page only)
-  if (allCalls.length === calls.length) {
-    document.getElementById('stat-total').textContent = allCalls.length + (hasMore ? '+' : '')
-    const durations = calls.map(c => c.call_duration_secs || 0).filter(Boolean)
-    document.getElementById('stat-avg').textContent = durations.length ? fmt.dur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length)) : '—'
-    document.getElementById('stat-today').textContent = calls.filter(c => fmt.today(c.start_time_unix_secs)).length
-  }
+  allCalls = data.conversations || []
 
   if (!allCalls.length) {
     document.getElementById('call-list').innerHTML = '<div class="px-6 py-16 text-center text-gray-600 text-sm">No calls yet — call your Twilio number to get started.</div>'
+    document.getElementById('stat-total').textContent = '0'
+    document.getElementById('stat-avg').textContent = '—'
+    document.getElementById('stat-today').textContent = '0'
     return
   }
 
+  document.getElementById('stat-total').textContent = allCalls.length
+  const durations = allCalls.map(c => c.duration || 0).filter(Boolean)
+  document.getElementById('stat-avg').textContent = durations.length
+    ? fmt.dur(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))
+    : '—'
+  document.getElementById('stat-today').textContent = allCalls.filter(c => fmt.today(c.start_time)).length
+
   document.getElementById('call-list').innerHTML = allCalls.map(c => {
-    const name = c.conversation_initiation_client_data?.dynamic_variables?.caller_name
-              || c.metadata?.phone_number || 'Unknown'
+    const name = c.caller_name || c.from_number || 'Unknown'
     const initial = name.charAt(0).toUpperCase()
-    const badge = c.call_successful === 'success'
-      ? '<span class="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">Success</span>'
-      : c.call_successful === 'failure'
-      ? '<span class="text-xs text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full">Failed</span>'
-      : ''
     return `<div class="border-b border-gray-800/60 last:border-0 px-6 py-4 flex items-center gap-4 hover:bg-white/[.02] cursor-pointer transition-colors"
-                 onclick="openDrawer('${c.conversation_id}','${name.replace(/'/g,"\\'")}')">
+                 onclick="openDrawer('${c.call_sid}','${name.replace(/'/g,"\\'")}')">
       <div class="w-9 h-9 rounded-full bg-indigo-600/20 border border-indigo-600/30 flex items-center justify-center shrink-0">
         <span class="text-indigo-400 text-sm font-bold">${initial}</span>
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <p class="text-sm font-medium text-white">${name}</p>${badge}
-        </div>
-        <p class="text-xs text-gray-600 mt-0.5">${fmt.date(c.start_time_unix_secs)}</p>
+        <p class="text-sm font-medium text-white">${name}</p>
+        <p class="text-xs text-gray-600 mt-0.5">${fmt.date(c.start_time)}</p>
       </div>
       <div class="text-right shrink-0">
-        <p class="text-sm text-gray-400">${fmt.dur(c.call_duration_secs||0)}</p>
+        <p class="text-sm text-gray-400">${fmt.dur(c.duration||0)}</p>
         <p class="text-xs text-gray-700 mt-0.5">${c.message_count||0} msgs</p>
       </div>
       <span class="text-gray-700 ml-1">›</span>
     </div>`
   }).join('')
-
-  document.getElementById('load-more-row').classList.toggle('hidden', !hasMore)
 }
 
-async function openDrawer(id, name) {
+async function openDrawer(callSid, name) {
   document.getElementById('drawer-title').textContent = name
   document.getElementById('drawer-body').innerHTML = '<div class="text-center text-gray-600 text-sm py-8">Loading transcript…</div>'
   document.getElementById('drawer').classList.remove('hidden')
 
-  const res = await fetch(`/api/conversations/${id}`)
+  const res = await fetch(`/api/conversations/${callSid}`)
+  if (!res.ok) {
+    document.getElementById('drawer-body').innerHTML = '<div class="text-center text-red-400 text-sm py-8">Failed to load transcript.</div>'
+    return
+  }
   const data = await res.json()
   const transcript = data.transcript || []
-  const summary = data.analysis?.transcript_summary
 
-  let html = ''
-  if (summary) {
-    html += `<div class="rounded-xl border border-indigo-800/40 bg-indigo-950/30 p-4 mb-2">
-      <p class="text-xs text-indigo-400 font-semibold uppercase tracking-widest mb-1.5">Summary</p>
-      <p class="text-sm text-gray-300 leading-relaxed">${summary}</p>
-    </div>`
-  }
   if (!transcript.length) {
-    html += '<p class="text-sm text-gray-600 text-center py-8">No transcript available.</p>'
-  } else {
-    html += transcript.map(t => {
-      const isAgent = t.role === 'agent'
-      return `<div class="flex gap-2.5 ${isAgent ? '' : 'flex-row-reverse'}">
-        <div class="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5
-                    ${isAgent ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}">
-          ${isAgent ? 'K' : 'U'}
-        </div>
-        <div class="max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed
-                    ${isAgent ? 'bg-indigo-900/40 text-gray-200 rounded-tl-sm' : 'bg-gray-800 text-gray-200 rounded-tr-sm'}">
-          ${t.message}
-        </div>
-      </div>`
-    }).join('')
+    document.getElementById('drawer-body').innerHTML = '<p class="text-sm text-gray-600 text-center py-8">No transcript available.</p>'
+    return
   }
-  document.getElementById('drawer-body').innerHTML = html
+
+  document.getElementById('drawer-body').innerHTML = transcript.map(t => {
+    const isAgent = t.role === 'assistant'
+    return `<div class="flex gap-2.5 ${isAgent ? '' : 'flex-row-reverse'}">
+      <div class="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5
+                  ${isAgent ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300'}">
+        ${isAgent ? 'K' : 'U'}
+      </div>
+      <div class="max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed
+                  ${isAgent ? 'bg-indigo-900/40 text-gray-200 rounded-tl-sm' : 'bg-gray-800 text-gray-200 rounded-tr-sm'}">
+        ${t.content}
+      </div>
+    </div>`
+  }).join('')
 }
 
 function closeDrawer() { document.getElementById('drawer').classList.add('hidden') }

@@ -6,28 +6,12 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.config import settings
 from app.models.caller import CallerProfile
-from app.services.deps import caller_db
+from app.services.deps import caller_db, call_store
 
 router = APIRouter(prefix="/api")
 
 _EL_BASE = "https://api.elevenlabs.io"
 _QUESTIONS_PATH = Path(__file__).parent.parent.parent / "data" / "questions.yaml"
-
-
-async def _el_get(path: str, params: dict = None):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{_EL_BASE}{path}",
-            headers={"xi-api-key": settings.elevenlabs_api_key},
-            params=params or {},
-            timeout=15.0,
-        )
-        if not resp.is_success:
-            raise HTTPException(
-                status_code=resp.status_code,
-                detail=f"ElevenLabs {resp.status_code}: {resp.text}",
-            )
-        return resp.json()
 
 
 # ---------------------------------------------------------------------------
@@ -43,11 +27,10 @@ async def debug():
     result: dict = {
         "api_key_preview": preview,
         "api_key_length": len(key),
-        "agent_id": settings.elevenlabs_agent_id or "(not set)",
+        "anthropic_key_set": bool(settings.anthropic_api_key),
     }
 
     async with httpx.AsyncClient() as client:
-        # Test 1: basic auth
         try:
             resp = await client.get(
                 f"{_EL_BASE}/v1/user",
@@ -64,37 +47,24 @@ async def debug():
         except Exception as exc:
             result["elevenlabs_auth"] = f"ERROR — {exc}"
 
-        # Test 2: conversations history endpoint
-        try:
-            resp2 = await client.get(
-                f"{_EL_BASE}/v1/convai/conversations",
-                headers={"xi-api-key": key},
-                params={"agent_id": settings.elevenlabs_agent_id, "page_size": 1},
-                timeout=10.0,
-            )
-            result["conversations_endpoint"] = resp2.status_code
-            result["conversations_response"] = resp2.text[:500]
-        except Exception as exc:
-            result["conversations_endpoint"] = f"ERROR — {exc}"
-
     return result
 
 
 # ---------------------------------------------------------------------------
-# Call history — proxied from ElevenLabs (keeps API key server-side)
+# Call history — from local call log
 # ---------------------------------------------------------------------------
 
 @router.get("/conversations")
-async def list_conversations(page_size: int = 30, cursor: str = ""):
-    params = {"agent_id": settings.elevenlabs_agent_id, "page_size": page_size}
-    if cursor:
-        params["cursor"] = cursor
-    return await _el_get("/v1/convai/conversations", params)
+async def list_conversations(limit: int = 30):
+    return {"conversations": call_store.recent(limit)}
 
 
-@router.get("/conversations/{conversation_id}")
-async def get_conversation(conversation_id: str):
-    return await _el_get(f"/v1/convai/conversations/{conversation_id}")
+@router.get("/conversations/{call_sid}")
+async def get_conversation(call_sid: str):
+    record = call_store.find(call_sid)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Call not found")
+    return record
 
 
 # ---------------------------------------------------------------------------

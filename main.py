@@ -27,7 +27,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "agent_id": settings.elevenlabs_agent_id or "not configured"}
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

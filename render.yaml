@@ -7,11 +7,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: ELEVENLABS_API_KEY
-        sync: false          # you'll enter this in the Render dashboard
-      - key: ELEVENLABS_AGENT_ID
         sync: false
-      - key: ELEVENLABS_LLM
-        value: claude-3-5-sonnet
+      - key: ELEVENLABS_VOICE_ID
+        value: "EXAVITQu4vr4xnSDxMaL"   # default Sarah voice — override if desired
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN

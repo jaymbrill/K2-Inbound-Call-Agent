@@ -20,32 +20,47 @@ _QUESTIONS_PATH = Path(__file__).parent.parent.parent / "data" / "questions.yaml
 
 @router.get("/debug")
 async def debug():
-    """Check API key validity and ElevenLabs connectivity."""
-    key = settings.elevenlabs_api_key
-    preview = (key[:8] + "…" + key[-4:]) if len(key) > 12 else "too short / missing"
+    """Check all external dependencies and config."""
+    from app.services import voice
 
+    el_key = settings.elevenlabs_api_key
     result: dict = {
-        "api_key_preview": preview,
-        "api_key_length": len(key),
+        "elevenlabs_key_preview": (el_key[:8] + "…" + el_key[-4:]) if len(el_key) > 12 else "MISSING",
+        "elevenlabs_voice_id": settings.elevenlabs_voice_id,
         "anthropic_key_set": bool(settings.anthropic_api_key),
+        "server_url": settings.server_url,
+        "validate_twilio_signature": settings.validate_twilio_signature,
     }
 
+    # Test ElevenLabs auth
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
                 f"{_EL_BASE}/v1/user",
-                headers={"xi-api-key": key},
+                headers={"xi-api-key": el_key},
                 timeout=10.0,
             )
-            if resp.is_success:
-                user = resp.json()
-                result["elevenlabs_auth"] = "OK"
-                result["account_email"] = user.get("email", "(hidden)")
-            else:
-                result["elevenlabs_auth"] = f"FAILED — {resp.status_code}"
-                result["elevenlabs_error"] = resp.text
+            result["elevenlabs_auth"] = "OK" if resp.is_success else f"FAILED {resp.status_code}: {resp.text[:200]}"
         except Exception as exc:
-            result["elevenlabs_auth"] = f"ERROR — {exc}"
+            result["elevenlabs_auth"] = f"ERROR: {exc}"
+
+    # Test ElevenLabs TTS (short phrase)
+    try:
+        audio = await voice.text_to_speech("Hello.")
+        result["elevenlabs_tts"] = f"OK — {len(audio)} bytes"
+    except Exception as exc:
+        result["elevenlabs_tts"] = f"FAILED: {exc}"
+
+    # Test Anthropic
+    if settings.anthropic_api_key:
+        try:
+            from app.services import claude_client
+            reply = await claude_client.get_response("Say only: OK", [{"role": "user", "content": "ping"}])
+            result["anthropic_claude"] = f"OK — replied: {reply[:60]}"
+        except Exception as exc:
+            result["anthropic_claude"] = f"FAILED: {exc}"
+    else:
+        result["anthropic_claude"] = "SKIPPED — ANTHROPIC_API_KEY not set"
 
     return result
 

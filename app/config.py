@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     twilio_phone_number: str = ""
 
     server_url: str = "http://localhost:8000"
-    validate_twilio_signature: bool = True
+    validate_twilio_signature: bool = False
 
     log_level: str = "INFO"
 

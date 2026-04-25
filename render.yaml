@@ -21,6 +21,6 @@ services:
       - key: SERVER_URL
         sync: false          # set this to your Render URL after first deploy
       - key: VALIDATE_TWILIO_SIGNATURE
-        value: "true"
+        value: "false"
       - key: LOG_LEVEL
         value: INFO

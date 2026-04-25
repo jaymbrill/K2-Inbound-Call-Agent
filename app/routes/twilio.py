@@ -26,13 +26,23 @@ _ERROR_TWIML = (
 _HANGUP_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>'
 
 
+def _twilio_url(request: Request) -> str:
+    """Return the public HTTPS URL as Twilio signed it (fix Render's HTTP→HTTPS proxy)."""
+    url = str(request.url)
+    proto = request.headers.get("x-forwarded-proto", "")
+    if proto == "https" and url.startswith("http://"):
+        url = "https://" + url[7:]
+    return url
+
+
 def _validate_twilio(request: Request, form: dict):
     if not settings.validate_twilio_signature:
         return
     from twilio.request_validator import RequestValidator
     validator = RequestValidator(settings.twilio_auth_token)
     sig = request.headers.get("X-Twilio-Signature", "")
-    if not validator.validate(str(request.url), form, sig):
+    if not validator.validate(_twilio_url(request), form, sig):
+        logger.warning("Twilio signature validation failed — possible spoofed request")
         raise HTTPException(status_code=403, detail="Invalid Twilio signature")
 
 

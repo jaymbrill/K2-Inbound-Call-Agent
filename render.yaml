@@ -5,11 +5,15 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    disk:
+      name: k2-data
+      mountPath: /data
+      sizeGB: 1
     envVars:
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: ELEVENLABS_VOICE_ID
-        value: "EXAVITQu4vr4xnSDxMaL"   # default Sarah voice — override if desired
+        value: "EXAVITQu4vr4xnSDxMaL"   # override with your cloned voice ID
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: TWILIO_ACCOUNT_SID
@@ -19,7 +23,9 @@ services:
       - key: TWILIO_PHONE_NUMBER
         sync: false
       - key: SERVER_URL
-        sync: false          # set this to your Render URL after first deploy
+        sync: false
+      - key: DATA_DIR
+        value: /data
       - key: VALIDATE_TWILIO_SIGNATURE
         value: "false"
       - key: LOG_LEVEL

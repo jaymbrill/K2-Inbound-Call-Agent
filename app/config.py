@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""
 
+    data_dir: str = ""  # override to a persistent path in production (e.g. /data)
+
     server_url: str = "http://localhost:8000"
     validate_twilio_signature: bool = False
 

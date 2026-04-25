@@ -117,6 +117,14 @@ class CallStore:
             self._completed.insert(0, record)
             self._write()
 
+    def set_summary(self, call_sid: str, summary: str) -> bool:
+        for record in self._completed:
+            if record["call_sid"] == call_sid:
+                record["summary"] = summary
+                self._write()
+                return True
+        return False
+
     def recent(self, limit: int = 50) -> list:
         return self._completed[:limit]
 

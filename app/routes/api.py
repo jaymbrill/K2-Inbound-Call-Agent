@@ -109,6 +109,60 @@ async def get_conversation(call_sid: str):
     return record
 
 
+@router.post("/conversations/{call_sid}/summarize")
+async def summarize_conversation(call_sid: str):
+    from app.services import claude_client
+    record = call_store.find(call_sid)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Call not found")
+    transcript = record.get("transcript", [])
+    if not transcript:
+        raise HTTPException(status_code=400, detail="No transcript to summarize")
+
+    formatted = "\n".join(
+        f"{'K2' if t['role'] == 'assistant' else 'Caller'}: {t['content']}"
+        for t in transcript
+    )
+    summary = await claude_client.get_response(
+        "You summarize phone conversations concisely. "
+        "Given a transcript between K2 (AI assistant) and a caller, write 2-3 sentences covering: "
+        "who called (if known), the main topics discussed, and any key information or follow-ups. "
+        "Be specific. Do not use bullet points.",
+        [{"role": "user", "content": f"Summarize this call:\n\n{formatted}"}],
+    )
+    call_store.set_summary(call_sid, summary)
+    return {"summary": summary}
+
+
+@router.post("/conversations/summarize-all")
+async def summarize_all():
+    from app.services import claude_client
+    results = []
+    for record in call_store.recent(200):
+        if record.get("summary"):
+            continue
+        transcript = record.get("transcript", [])
+        if not transcript:
+            continue
+        formatted = "\n".join(
+            f"{'K2' if t['role'] == 'assistant' else 'Caller'}: {t['content']}"
+            for t in transcript
+        )
+        try:
+            summary = await claude_client.get_response(
+                "You summarize phone conversations concisely. "
+                "Given a transcript between K2 (AI assistant) and a caller, write 2-3 sentences covering: "
+                "who called (if known), the main topics discussed, and any key information or follow-ups. "
+                "Be specific. Do not use bullet points.",
+                [{"role": "user", "content": f"Summarize this call:\n\n{formatted}"}],
+            )
+            call_store.set_summary(record["call_sid"], summary)
+            results.append({"call_sid": record["call_sid"], "ok": True})
+        except Exception as exc:
+            results.append({"call_sid": record["call_sid"], "ok": False, "error": str(exc)})
+    return {"summarized": len([r for r in results if r["ok"]]), "results": results}
+
+
 # ---------------------------------------------------------------------------
 # Callers CRUD
 # ---------------------------------------------------------------------------

@@ -1,44 +1,37 @@
 intro_prompt: |
-  After your opening greeting and vibe coding prompt, guide the conversation naturally
-  through the questions below. Your goal is to help the caller think through and articulate
-  what they want to build — so the insights can inform a clear, spec-driven AI development
-  project. Do NOT read questions robotically — respond warmly to what they say, follow the
-  thread, and transition into each question when the moment is right.
-  If they answer multiple questions at once, acknowledge it and continue naturally.
-  Your job is to draw out their thinking, not interview them.
+  You have already explained the K2 offsite vibe-coding demo context in your opening.
+  Now transition naturally into the questions below — your goal is to draw out real,
+  specific problem ideas this person thinks would be worth building.
+  Don't interrogate; have a genuine conversation. Follow the thread when they share
+  something interesting. If they answer multiple questions at once, acknowledge it and move on.
 
 questions:
-  - id: project_idea
-    text: "What's the project or idea you're working on — give me the one-sentence version."
-    variable_name: project_idea
+  - id: problem_space
+    text: "What's a problem you run into — or see others dealing with — that feels like it should be easier than it is?"
+    variable_name: problem_space
     required: true
 
-  - id: problem_and_who
-    text: "Who has the problem this solves, and what does their life look like without it?"
-    variable_name: problem_and_who
+  - id: who_feels_it
+    text: "Who feels that pain the most — is it something specific to your team, your industry, or more universal?"
+    variable_name: who_feels_it
     required: true
 
-  - id: jtbd
-    text: "What's the job-to-be-done here — what would someone hire this to do that nothing else does well enough?"
-    variable_name: jtbd
-    required: true
-
-  - id: success_definition
-    text: "What does success look like when it's built — what are users doing differently?"
-    variable_name: success_definition
-    required: true
-
-  - id: mvp_scope
-    text: "What's the simplest version that would deliver real value — what can you cut without losing the core?"
-    variable_name: mvp_scope
-    required: true
-
-  - id: constraints
-    text: "Any hard constraints or non-negotiables the spec needs to account for — tech stack, integrations, timeline?"
-    variable_name: constraints
+  - id: current_workaround
+    text: "How do people deal with it today — is there a workaround, or do they just live with it?"
+    variable_name: current_workaround
     required: false
 
-  - id: open_questions
-    text: "What's still fuzzy or unresolved — what are the open questions you'd want the spec to answer?"
-    variable_name: open_questions
+  - id: demo_appeal
+    text: "If we built something that solved that in a live demo, what would make it feel impressive and real — not just a toy?"
+    variable_name: demo_appeal
+    required: true
+
+  - id: scope_gut_check
+    text: "What's your gut on scope — does something meaningful feel buildable in a day or two, or is it inherently complex?"
+    variable_name: scope_gut_check
+    required: false
+
+  - id: other_ideas
+    text: "Any other problems that came to mind — even rough ones?"
+    variable_name: other_ideas
     required: false

@@ -7,6 +7,14 @@ You are having a real phone conversation — keep responses concise and natural.
 This is voice, not text: avoid lists, bullet points, or long paragraphs. \
 Listen actively and refer back to what the caller shares before moving on."""
 
+_OFFSITE_CONTEXT = (
+    "we have a K2 offsite next week where we're doing a live vibe-coding demonstration — "
+    "showing how you can build a real app using AI in a short amount of time. "
+    "We want the demo to actually solve a problem that matters, so we're reaching out "
+    "to a few people to source ideas."
+)
+
+
 def build_first_message(caller: CallerProfile) -> str:
     if not caller.is_known:
         return (
@@ -15,17 +23,9 @@ def build_first_message(caller: CallerProfile) -> str:
         )
 
     name = caller.display_name()
-
-    if caller.call_count == 0:
-        return (
-            f"Hey {name}! So great to hear from you — first time calling! "
-            f"So, what are you building?"
-        )
-
-    ordinal = _ordinal(caller.call_count + 1)
     return (
-        f"Hey {name}! Good to hear from you again — this is your {ordinal} call! "
-        f"What's the project?"
+        f"Hey {name}! Great to connect. So the reason I'm reaching out — {_OFFSITE_CONTEXT} "
+        f"I'd love to pick your brain for a few minutes if you have time."
     )
 
 
@@ -41,9 +41,10 @@ def build_system_prompt(caller: CallerProfile, question_set: QuestionSet) -> str
         parts.append(f"- Previous calls: {caller.call_count}")
         if caller.vibe_prompt:
             parts.append(
-                f"\nVIBE CODING FOCUS:\n{caller.vibe_prompt}\n"
-                "Use this as the lens for your opening question — don't recite it, "
-                "but let it shape how you ask about what they're building and why."
+                f"\nPERSONALIZED ANGLE FOR THIS CALLER:\n{caller.vibe_prompt}\n"
+                "After your opening context about the offsite demo, use this angle to make "
+                "a natural, personalized bridge into the first question — reference why you "
+                "thought of them specifically. Don't read this verbatim; weave it in naturally."
             )
 
     if question_set.intro_prompt:

@@ -25,7 +25,8 @@ def build_first_message(caller: CallerProfile) -> str:
     name = caller.display_name()
     return (
         f"Hey {name}! Great to connect. So the reason I'm reaching out — {_OFFSITE_CONTEXT} "
-        f"I'd love to pick your brain for a few minutes if you have time."
+        f"I'd love to pick your brain for a few minutes if you have time. "
+        f"Ready to jump in?"
     )
 
 
@@ -46,6 +47,15 @@ def build_system_prompt(caller: CallerProfile, question_set: QuestionSet) -> str
                 "a natural, personalized bridge into the first question — reference why you "
                 "thought of them specifically. Don't read this verbatim; weave it in naturally."
             )
+
+    parts.append(
+        "\nCONFIRMATION HANDLING:\n"
+        "Your opening message ended with 'Ready to jump in?' — the caller's first response "
+        "will likely be a simple yes or affirmation (yes, sure, go ahead, yep, absolutely, etc.). "
+        "If it sounds anything like agreement, do NOT acknowledge it or say 'great!' — "
+        "just flow directly into the personalized bridge and first question. "
+        "If they seem hesitant or say no, be warm and offer to call back at a better time."
+    )
 
     if question_set.intro_prompt:
         parts.append(f"\n{question_set.intro_prompt}")

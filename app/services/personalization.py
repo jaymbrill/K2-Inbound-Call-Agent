@@ -16,22 +16,15 @@ def build_first_message(caller: CallerProfile) -> str:
 
     name = caller.display_name()
 
-    if caller.vibe_prompt:
-        prompt_line = f"I've got a vibe coding prompt for you to noodle on: {caller.vibe_prompt} "
-    else:
-        prompt_line = ""
-
     if caller.call_count == 0:
         return (
             f"Hey {name}! So great to hear from you — first time calling! "
-            f"{prompt_line}"
             f"So, what are you building?"
         )
 
     ordinal = _ordinal(caller.call_count + 1)
     return (
         f"Hey {name}! Good to hear from you again — this is your {ordinal} call! "
-        f"{prompt_line}"
         f"What's the project?"
     )
 
@@ -46,6 +39,12 @@ def build_system_prompt(caller: CallerProfile, question_set: QuestionSet) -> str
         if caller.notes:
             parts.append(f"- Background: {caller.notes}")
         parts.append(f"- Previous calls: {caller.call_count}")
+        if caller.vibe_prompt:
+            parts.append(
+                f"\nVIBE CODING FOCUS:\n{caller.vibe_prompt}\n"
+                "Use this as the lens for your opening question — don't recite it, "
+                "but let it shape how you ask about what they're building and why."
+            )
 
     if question_set.intro_prompt:
         parts.append(f"\n{question_set.intro_prompt}")

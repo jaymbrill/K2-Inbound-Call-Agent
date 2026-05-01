@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-  <p class="text-sm text-gray-500">Known callers get a personalized greeting and joke on every call.</p>
+  <p class="text-sm text-gray-500">Known callers get a personalized greeting and vibe coding prompt on every call.</p>
   <button onclick="openModal(null)"
           class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
     + Add Caller
@@ -45,8 +45,8 @@
         </div>
       </div>
       <div>
-        <label class="block text-xs text-gray-400 mb-1.5">Personalized Joke</label>
-        <input id="f-joke" type="text" placeholder="Why do programmers prefer dark mode? Light attracts bugs!"
+        <label class="block text-xs text-gray-400 mb-1.5">Vibe Coding Prompt <span class="text-gray-600">(shared at the start of each call)</span></label>
+        <input id="f-vibe-prompt" type="text" placeholder="What's the one job your app needs to do so well that users would be lost without it?"
                class="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 border border-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
                style="background:#1a1a24" />
       </div>
@@ -93,7 +93,7 @@ function render() {
           <span class="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">${c.call_count||0} call${c.call_count!==1?'s':''}</span>
         </div>
         <p class="text-xs text-gray-600 mt-0.5 font-mono">${c.phone_number}</p>
-        ${c.joke?`<p class="text-xs text-gray-600 mt-1.5 italic">"${c.joke}"</p>`:''}
+        ${c.vibe_prompt?`<p class="text-xs text-indigo-400/70 mt-1.5 italic">"${c.vibe_prompt}"</p>`:''}
         ${c.notes?`<p class="text-xs text-gray-500 mt-1">${c.notes}</p>`:''}
       </div>
       <div class="flex gap-2 shrink-0">
@@ -116,7 +116,7 @@ function openModal(c) {
   document.getElementById('f-phone').disabled = !!c
   document.getElementById('f-name').value = c?.name || ''
   document.getElementById('f-nickname').value = c?.nickname || ''
-  document.getElementById('f-joke').value = c?.joke || ''
+  document.getElementById('f-vibe-prompt').value = c?.vibe_prompt || ''
   document.getElementById('f-notes').value = c?.notes || ''
   document.getElementById('modal').classList.remove('hidden')
 }
@@ -133,7 +133,7 @@ async function saveCaller() {
   const payload = {
     name,
     nickname: document.getElementById('f-nickname').value.trim() || null,
-    joke:     document.getElementById('f-joke').value.trim() || null,
+    vibe_prompt: document.getElementById('f-vibe-prompt').value.trim() || null,
     notes:    document.getElementById('f-notes').value.trim() || null,
     call_count: existing?.call_count || 0,
     is_known: true,

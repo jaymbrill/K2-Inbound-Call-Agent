@@ -1,31 +1,44 @@
 intro_prompt: |
-  After your opening greeting, guide the conversation naturally through the questions below.
-  Do NOT read them like a script — respond warmly to what the caller says first, then
-  transition into each question when the moment feels right.
-  If a caller answers multiple questions at once, acknowledge it and move on naturally.
+  After your opening greeting and vibe coding prompt, guide the conversation naturally
+  through the questions below. Your goal is to help the caller think through and articulate
+  what they want to build — so the insights can inform a clear, spec-driven AI development
+  project. Do NOT read questions robotically — respond warmly to what they say, follow the
+  thread, and transition into each question when the moment is right.
+  If they answer multiple questions at once, acknowledge it and continue naturally.
+  Your job is to draw out their thinking, not interview them.
 
 questions:
-  - id: checkin
-    text: "How have you been lately?"
-    variable_name: checkin
+  - id: project_idea
+    text: "What's the project or idea you're working on — give me the one-sentence version."
+    variable_name: project_idea
     required: true
 
-  - id: recent_news
-    text: "Anything exciting going on in your world?"
-    variable_name: recent_news
+  - id: problem_and_who
+    text: "Who has the problem this solves, and what does their life look like without it?"
+    variable_name: problem_and_who
+    required: true
+
+  - id: jtbd
+    text: "What's the job-to-be-done here — what would someone hire this to do that nothing else does well enough?"
+    variable_name: jtbd
+    required: true
+
+  - id: success_definition
+    text: "What does success look like when it's built — what are users doing differently?"
+    variable_name: success_definition
+    required: true
+
+  - id: mvp_scope
+    text: "What's the simplest version that would deliver real value — what can you cut without losing the core?"
+    variable_name: mvp_scope
+    required: true
+
+  - id: constraints
+    text: "Any hard constraints or non-negotiables the spec needs to account for — tech stack, integrations, timeline?"
+    variable_name: constraints
     required: false
 
-  - id: on_your_mind
-    text: "What's been on your mind these days?"
-    variable_name: on_your_mind
-    required: true
-
-  - id: projects
-    text: "Any interesting projects or plans you're working on?"
-    variable_name: projects
+  - id: open_questions
+    text: "What's still fuzzy or unresolved — what are the open questions you'd want the spec to answer?"
+    variable_name: open_questions
     required: false
-
-  - id: help_needed
-    text: "Is there anything specific I can help with or follow up on for you?"
-    variable_name: help_needed
-    required: true

@@ -4,7 +4,7 @@
     "name": "Jay",
     "nickname": "J",
     "notes": "Owner and admin. Loves tech and coffee.",
-    "joke": "Why do programmers prefer dark mode? Because light attracts bugs!",
+    "vibe_prompt": "What's the one job your app needs to do so well that users would be lost without it?",
     "call_count": 0,
     "is_known": true
   },
@@ -13,7 +13,7 @@
     "name": "Alex",
     "nickname": null,
     "notes": "Close friend. Into music and hiking.",
-    "joke": "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    "vibe_prompt": "If your project had to solve exactly one problem for one type of person, what would that be?",
     "call_count": 0,
     "is_known": true
   },
@@ -22,7 +22,7 @@
     "name": "Sam",
     "nickname": null,
     "notes": "Colleague. Working on the Q3 project.",
-    "joke": "Why don't scientists trust atoms? Because they make up everything!",
+    "vibe_prompt": "What does success look like in three months — what would users be doing differently?",
     "call_count": 0,
     "is_known": true
   }

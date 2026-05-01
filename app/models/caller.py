@@ -8,7 +8,7 @@ class CallerProfile:
     name: str = "there"
     nickname: Optional[str] = None
     notes: Optional[str] = None
-    joke: Optional[str] = None
+    vibe_prompt: Optional[str] = None
     call_count: int = 0
     is_known: bool = False
 

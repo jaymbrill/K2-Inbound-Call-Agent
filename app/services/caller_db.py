@@ -38,7 +38,7 @@ class CallerDatabase:
             "name": profile.name,
             "nickname": profile.nickname,
             "notes": profile.notes,
-            "joke": profile.joke,
+            "vibe_prompt": profile.vibe_prompt,
             "call_count": profile.call_count,
             "is_known": profile.is_known,
         }
@@ -65,7 +65,7 @@ class CallerDatabase:
                 "name": "there",
                 "nickname": None,
                 "notes": None,
-                "joke": None,
+                "vibe_prompt": None,
                 "call_count": 1,
                 "is_known": False,
             }
